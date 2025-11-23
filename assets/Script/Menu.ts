@@ -1,62 +1,54 @@
-import { _decorator, Component, Node, input, Input, EventMouse, EventTouch, director } from 'cc';
+import { _decorator, Component, Node, input, Input, EventMouse, EventTouch, director } from "cc";
 const { ccclass, property } = _decorator;
 
-
-
-@ccclass('Menu')
+@ccclass("Menu")
 export class Menu extends Component {
-    @property(Node)
-    startButton: Node = null;
-    @property(Node)
-    exitButton: Node = null;
-    @property(Node)
-    statsButton: Node = null;
+  @property(Node)
+  startButton: Node = null;
+  @property(Node)
+  exitButton: Node = null;
+  @property(Node)
+  statsButton: Node = null;
 
-    start() { }
+  start() {}
 
-    protected onLoad(): void {
-        this.node.children.forEach(child => {
-            child.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
-        })
+  protected onLoad(): void {
+    this.node.children.forEach((child) => {
+      child.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+    });
 
-        director.preloadScene("Game", function () {
-            console.log('Game scene preloaded');
-        });
+    director.preloadScene("Game", function () {
+      console.log("Game scene preloaded");
+    });
+  }
+
+  setInputActive(active: boolean) {
+    if (active) {
+      input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+    } else {
+      input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
     }
+  }
 
+  update(deltaTime: number) {}
 
-    setInputActive(active: boolean) {
-        if (active) {
-            input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this)
-        } else {
-            input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this)
-        }
+  onTouchStart(event: EventTouch) {
+    console.log(event);
+  }
+
+  onMouseUp(event: EventMouse) {
+    const target = event.target as Node;
+
+    if (event.getButton() === 0) {
+      switch (target) {
+        case this.startButton:
+          director.loadScene("Game", (err, scene) => {
+            director.runScene(scene);
+          });
+          break;
+        default:
+          break;
+      }
     }
-
-    update(deltaTime: number) {
-
-    }
-
-    onTouchStart(event: EventTouch) {
-        console.log(event)
-    }
-
-    onMouseUp(event: EventMouse) {
-        const target = event.target as Node
-
-        if (event.getButton() === 0) {
-            switch (target) {
-                case this.startButton:
-                    director.loadScene('Game', (err, scene) => {
-                        director.runScene(scene);
-                    })
-                    break;
-                default:
-                    break;
-            }
-        }
-
-    }
+  }
 }
-
-

@@ -3,5 +3,12 @@
   "uuid": "d66a9cff-7cf9-4d75-9678-29407a7b9984",
   "creator": {
     "version": "3.8.7"
+  },
+  "scripts": {
+    "prettier": "prettier --write --config .prettierrc ./assets/Script/**/*.ts"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "typescript": "^5.9.3"
   }
 }
