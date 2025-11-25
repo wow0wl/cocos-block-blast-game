@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Input, instantiate, SpriteFrame, resources, Prefab, Layout, Camera, Sprite, UITransform } from "cc";
+import { _decorator, Component, Node, Input, instantiate, SpriteFrame, resources, Prefab, Layout, Camera, Sprite, UITransform, Animation } from "cc";
 import { Box } from "./Box";
 
 const { ccclass, property } = _decorator;

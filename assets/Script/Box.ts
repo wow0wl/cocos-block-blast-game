@@ -1,4 +1,4 @@
-import { _decorator, Component, Sprite, SpriteFrame, UITransform, Input, director, Animation, animation, Vec2 } from "cc";
+import { _decorator, Component, Sprite, SpriteFrame, UITransform, Input, director, Animation, animation, Vec2, AnimationState, AnimationClip } from "cc";
 import { Game, type GameBoard, colorMap } from "./Game";
 
 import { BoxAnimation } from "./BoxAnimation";
@@ -32,13 +32,31 @@ export class Box extends Component {
     this.gameBoardSize = this.gameBoard[0].length;
 
     const boxAnimation = this.node.getComponent(BoxAnimation);
-    const { clip, track } = boxAnimation.createBaseAnimation("scaleAnimation", animation.VectorTrack, {
+    const { track: scaleAnimationTrack, clip: scaleAnimationClip } = boxAnimation.createBaseAnimation("scaleAnimation", animation.VectorTrack, {
       duration: 1,
       keys: [[0.0, 0.5, 1.0]],
       wrapMode: 2,
     });
-    const scaleClip = boxAnimation.createScaleAnimation(track, clip, [new Vec2(1.0, 1.0), new Vec2(1.05, 1.05), new Vec2(1.0, 1.0)]);
+    const { track: destroyAnimationTrack, clip: destroyAnimationClip } = boxAnimation.createBaseAnimation("destroyAnimation", animation.VectorTrack, {
+      duration: 0.5,
+      keys: [[0.0, 0.2, 0.3, 0.4, 0.5]],
+      wrapMode: 0,
+    });
+    const scaleClip = boxAnimation.createScaleAnimation(scaleAnimationTrack, scaleAnimationClip, [
+      new Vec2(1.0, 1.0),
+      new Vec2(1.05, 1.05),
+      new Vec2(1.0, 1.0),
+    ]);
+    const destoryClip = boxAnimation.createScaleAnimation(destroyAnimationTrack, destroyAnimationClip, [
+      new Vec2(1.0, 1.0),
+      new Vec2(1.1, 1.1),
+      new Vec2(0.6, 0.6),
+      new Vec2(0.3, 0.3),
+      new Vec2(0, 0),
+    ]);
     boxAnimation.addAnimationClip(scaleClip);
+    boxAnimation.addAnimationClip(destoryClip);
+
     this.boxAnimation = boxAnimation.getAnimation();
   }
 
@@ -86,6 +104,7 @@ export class Box extends Component {
       return;
     }
 
+    let removePromise: Promise<any>[] = [];
     /**
      * Поиск удаляемого тайтла по копии
      */
@@ -93,13 +112,35 @@ export class Box extends Component {
       for (let j = 0; j < destroyedTitle[i].length; j++) {
         if (copyBoard[i][j] === null) {
           const boxDenormalizedIndex = getDenormalizedIndex([i, j], this.gameBoardSize); // Индексы тайтла в оригинальном игровок поле
-          this.deleteNode(boxDenormalizedIndex);
+          const _this = this;
+          this.gameBoard[boxDenormalizedIndex[0]][boxDenormalizedIndex[1]][0].getComponent(Animation).play("destroyAnimation");
+
+          removePromise.push(
+            new Promise((resolve, reject) => {
+              this.boxAnimation.on(
+                Animation.EventType.FINISHED,
+                (type, state) => {
+                  _this.onDestroyAnimationFinished(type, state, () => {
+                    _this.deleteNode(boxDenormalizedIndex);
+                    resolve(1);
+                  });
+                },
+                this,
+              );
+            }),
+          );
         }
       }
     }
 
-    director.getScene().getChildByName("Canvas").getComponent(Game).shuffleGameBoard();
-    this.gameBoard = director.getScene().getChildByName("Canvas").getComponent(Game).gameBoard;
+    Promise.all(removePromise).then(() => {
+      director.getScene().getChildByName("Canvas").getComponent(Game).shuffleGameBoard();
+      this.gameBoard = director.getScene().getChildByName("Canvas").getComponent(Game).gameBoard;
+    });
+  }
+
+  private onDestroyAnimationFinished(type: Animation.EventType, state: AnimationState, callback: () => void) {
+    callback();
   }
 
   private deleteNode([rIndex, cIndex]: Position) {
