@@ -22,9 +22,9 @@ export class Box extends Component {
   private gameBoardSize: number = 0;
   public boxAnimation: Animation = null;
 
-  start() {}
+  protectedstart() { }
 
-  onLoad(): void {
+  protected onLoad(): void {
     this.node.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
 
     this.uiTransport = this.node.getComponent(UITransform);
@@ -42,27 +42,28 @@ export class Box extends Component {
       keys: [[0.0, 0.2, 0.3, 0.4, 0.5]],
       wrapMode: 0,
     });
-    const scaleClip = boxAnimation.createScaleAnimation(scaleAnimationTrack, scaleAnimationClip, [
+    const scaleClip = boxAnimation.createVectorAnimation(scaleAnimationTrack, scaleAnimationClip, [
       new Vec2(1.0, 1.0),
       new Vec2(1.05, 1.05),
       new Vec2(1.0, 1.0),
-    ]);
-    const destoryClip = boxAnimation.createScaleAnimation(destroyAnimationTrack, destroyAnimationClip, [
+    ], 'scale');
+
+    const destoryClip = boxAnimation.createVectorAnimation(destroyAnimationTrack, destroyAnimationClip, [
       new Vec2(1.0, 1.0),
       new Vec2(1.1, 1.1),
       new Vec2(0.6, 0.6),
       new Vec2(0.3, 0.3),
       new Vec2(0, 0),
-    ]);
+    ], 'scale');
     boxAnimation.addAnimationClip(scaleClip);
     boxAnimation.addAnimationClip(destoryClip);
 
     this.boxAnimation = boxAnimation.getAnimation();
   }
 
-  update(deltaTime: number) {}
+  protected update(deltaTime: number) { }
 
-  protected onDestroy(): void {}
+  protected onDestroy(): void { }
 
   public setSpriteFrame(spriteFrame: SpriteFrame): void {
     this.node.getComponent(Sprite).spriteFrame = spriteFrame;
@@ -77,7 +78,30 @@ export class Box extends Component {
   }
 
   public setPosition(x: number, y: number) {
-    this.node.setPosition(x, y);
+    const oldPosition = this.node.getPosition().toVec2()
+    const boxAnimation = this.node.getComponent(BoxAnimation)
+    const boxAnimationComponent = boxAnimation.getAnimation();
+
+    const { track: moveAnimationTrack, clip: moveAnimationClip } = boxAnimation.createBaseAnimation("moveAnimation", animation.VectorTrack, {
+      duration: 0.1,
+      keys: [[0.0, 0.1]],
+      wrapMode: 0,
+    });
+
+    const moveClip = boxAnimation.createVectorAnimation(moveAnimationTrack, moveAnimationClip, [
+      oldPosition,
+      new Vec2(x, y),
+    ], 'position');
+
+    boxAnimation.addAnimationClip(moveClip);
+    boxAnimationComponent.play("moveAnimation")
+    boxAnimationComponent.once(Animation.EventType.FINISHED,
+      (type, state) => {
+        boxAnimation.removeAnimationClip(moveAnimationClip)
+        this.node.setPosition(x, y);
+      },
+      this)
+
   }
 
   public onMouseUp() {

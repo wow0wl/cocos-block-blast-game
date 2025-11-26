@@ -44,25 +44,25 @@ export class Game extends Component {
       this.initGameField(this.BoxesLayout);
       for (let i = 0; i < this.gameBoard.length; i++) {
         for (let j = 0; j < this.gameBoard[0].length; j++) {
-          const nodeComponent = this.gameBoard[i][j][0].getComponent(Box);
-          nodeComponent.boxAnimation.play("scaleAnimation");
-          // this.gameBoard[i][j][0].on(Node.EventType.NODE_DESTROYED, () => {
-          // })
+          this.gameBoard[i][j][0].getComponent(Box).boxAnimation.play("scaleAnimation");
         }
       }
     });
   }
 
-  protected onEnable(): void {}
+  protected onEnable(): void { }
 
-  protected start(): void {}
+  protected start(): void { }
 
-  protected update(deltaTime: number): void {}
+  protected update(deltaTime: number): void { }
 
-  protected onDisable(): void {}
+  protected onDisable(): void { }
 
-  protected onDestroy(): void {}
+  protected onDestroy(): void { }
 
+  /**
+   * Перемещение соседних блоков, после удаления
+   */
   public shuffleGameBoard() {
     for (let i = this.gameBoard.length - 1; i >= 0; i--) {
       for (let j = this.gameBoard[0].length - 1; j >= 0; j--) {
@@ -78,7 +78,7 @@ export class Game extends Component {
 
               this.gameBoard[k][j][4] = false;
 
-              this.gameBoard[i][j][0].setPosition(oldBox[1][0], oldBox[1][1]);
+              this.gameBoard[i][j][0].getComponent(Box).setPosition(oldBox[1][0], oldBox[1][1]);
               this.gameBoard[i][j][0].getComponent(Box).setIndex2DMatrix([oldBox[2][0], oldBox[2][1]]);
               this.gameBoard[i][j][0].on(
                 Input.EventType.MOUSE_UP,

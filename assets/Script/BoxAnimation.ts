@@ -2,20 +2,20 @@ import { _decorator, AnimationClip, Component, animation, Vec2, Animation } from
 const { ccclass, property } = _decorator;
 
 interface TrackConstructor<T extends Track> {
-  new (): T;
+  new(): T;
 }
 
 type Track = animation.RealTrack | animation.VectorTrack | animation.ColorTrack | animation.QuatTrack | animation.SizeTrack;
 
 @ccclass("BoxAnimation")
 export class BoxAnimation extends Component {
-  private clips: Set<AnimationClip["name"]> = new Set();
+  private clips: Set<AnimationClip> = new Set();
 
-  protected start(): void {}
+  protected start(): void { }
 
-  protected onLoad(): void {}
+  protected onLoad(): void { }
 
-  protected update(deltaTime: number): void {}
+  protected update(deltaTime: number): void { }
 
   public createBaseAnimation<T extends Track>(
     clipName: string,
@@ -38,8 +38,8 @@ export class BoxAnimation extends Component {
     };
   }
 
-  public createScaleAnimation<T extends animation.VectorTrack>(vectorTrack: T, clip: AnimationClip, keyFrameState: Vec2[]): AnimationClip {
-    vectorTrack.path = new animation.TrackPath().toProperty("scale");
+  public createVectorAnimation<T extends animation.VectorTrack>(vectorTrack: T, clip: AnimationClip, keyFrameState: Vec2[], propertyPath: 'scale' | 'position'): AnimationClip {
+    vectorTrack.path = new animation.TrackPath().toProperty(propertyPath);
     const [x, y] = vectorTrack.channels();
 
     const vec2KeyFrames: [number, Vec2][] = clip.keys[0].map((key, i) => [key, keyFrameState[i]]);
@@ -53,21 +53,20 @@ export class BoxAnimation extends Component {
   }
 
   public addAnimationClip(clip: AnimationClip) {
-    let animationComponent = this.node.getComponent(Animation);
-    if (!animationComponent) {
-      animationComponent = this.node.addComponent(Animation);
-    }
-
-    if (this.clips.has(clip.name)) {
+    if (this.clips.has(clip)) {
       console.error(`Clip with ${clip.name} name already existing!`);
       return;
     }
 
-    animationComponent.addClip(clip, clip.name);
-    this.clips.add(clip.name);
+    this.getAnimation().addClip(clip, clip.name);
+    this.clips.add(clip);
+  }
+
+  public removeAnimationClip(clip: AnimationClip) {
+    this.getAnimation().removeClip(clip)
   }
 
   public getAnimation(): Animation {
-    return this.node.getComponent(Animation);
+    return this.node.getComponent(Animation) || this.node.addComponent(Animation)
   }
 }
